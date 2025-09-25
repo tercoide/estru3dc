@@ -1,4 +1,5 @@
-﻿using Gtk;
+﻿using e3d;
+using Gtk;
 using static Gtk.Orientation;
 using Menu = Gio.Menu;
 
@@ -30,11 +31,12 @@ class MyWindow : ApplicationWindow
         
         
         //top_hbox.Append(bar);
-        vc0_2.Append(Label.New("one"));
-        vc0_2.Append(Button.NewWithLabel("button 1"));
-        vc0_2.Append(Label.New("two"));
-        vc0_2.Append(Button.NewWithLabel("button 2"));
-
+        // vc0_2.Append(Label.New("one"));
+        // vc0_2.Append(Button.NewWithLabel("button 1"));
+        // vc0_2.Append(Label.New("two"));
+        // vc0_2.Append(Button.NewWithLabel("button 2"));
+        vc0_2.Append(Utils.CreateButton("/home/martin/estru3dc/data/png/tbBasica/calcular.png" ,24,"my tool tip"));
+        vc0_2.Append(Utils.CreateButton(Config.PathSvg +  "line.svg" ,24,"my tool tip"));
 
         Box left_vbox = Box.New(Vertical, 5);
         left_vbox.Append(Label.New("three"));
