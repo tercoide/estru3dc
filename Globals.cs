@@ -7,6 +7,7 @@ namespace e3d
         // Application settings
         public static string PathSvg = "/home/martin/estru3dc/data/svg/";
         //string PathPng = "/home/martin/estru3dc/data/png/";
+        public static int ButtonSize = 32;
         public static string AppName { get; set; } = "Estru3D";
         public static string Version { get; set; } = "1.0.0";
         
