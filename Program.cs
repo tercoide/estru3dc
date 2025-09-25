@@ -12,15 +12,29 @@ class MyWindow : ApplicationWindow
         Menu topMenu = create_menu();
         PopoverMenuBar bar = PopoverMenuBar.NewFromModel(topMenu);
 
-        //Box vbox0 = Box.New(Horizontal,5);
-        //vbox0.Append(bar);
+        Box vc0 = Box.New(Vertical,1);
         
-        Box top_hbox = Box.New(Horizontal, 5);
+        Box vc0_1 = Box.New(Horizontal, 1);
+        Box vc0_2 = Box.New(Horizontal, 5);
+        Box vc0_3 = Box.New(Horizontal, 5);
+        Box vc0_4 = Box.New(Horizontal, 5);
+        vc0.Append(vc0_1);
+        vc0.Append(vc0_2);
+        vc0.Append(vc0_3);
+        vc0.Append(vc0_4);
+
+       
+        
+
+        vc0_1.Append(bar);
+        
+        
         //top_hbox.Append(bar);
-        top_hbox.Append(Label.New("one"));
-        top_hbox.Append(Button.NewWithLabel("button 1"));
-        top_hbox.Append(Label.New("two"));
-        top_hbox.Append(Button.NewWithLabel("button 2"));
+        vc0_2.Append(Label.New("one"));
+        vc0_2.Append(Button.NewWithLabel("button 1"));
+        vc0_2.Append(Label.New("two"));
+        vc0_2.Append(Button.NewWithLabel("button 2"));
+
 
         Box left_vbox = Box.New(Vertical, 5);
         left_vbox.Append(Label.New("three"));
@@ -29,6 +43,10 @@ class MyWindow : ApplicationWindow
         Button button4 = Button.NewWithLabel("button 4");
         button4.Vexpand = true;
         left_vbox.Append(button4);
+
+        Box central_box = Box.New(Orientation.Vertical, 1);
+
+
 
         Grid grid = new()
         {
@@ -42,18 +60,23 @@ class MyWindow : ApplicationWindow
         Picture cube = Picture.NewForFilename("cube.png");
         cube.Halign = cube.Valign = Align.Center;
         grid.Attach(cube, 0, 2, 2, 1);
+        
 
-        Box hbox2 = Box.New(Horizontal, 5);
-        hbox2.Append(left_vbox);
-        hbox2.Append(Separator.New(Vertical));
-        hbox2.Append(grid);
 
-        Box vbox = Box.New(Vertical, 5);
-        vbox.Append(top_hbox);
-        vbox.Append(Separator.New(Horizontal));
-        vbox.Append(hbox2);
-        vbox.MarginTop = vbox.MarginBottom = vbox.MarginStart = vbox.MarginEnd = 8;
-        Child = vbox;
+        
+        vc0_3.Append(left_vbox);
+        vc0_3.Append(Separator.New(Vertical));
+        vc0_3.Append(central_box);
+        vc0_3.Append(Separator.New(Vertical));
+        vc0_3.Append(grid);
+
+        // Box vbox = Box.New(Vertical, 5);
+        // vbox.Append(top_hbox);
+        // vbox.Append(Separator.New(Horizontal));
+        // vbox.Append(hbox2);
+        // vbox.MarginTop = vbox.MarginBottom = vbox.MarginStart = vbox.MarginEnd = 8;
+        
+        Child = vc0;
 
         Menu create_menu()
         {
