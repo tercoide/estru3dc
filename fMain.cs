@@ -3,10 +3,17 @@ using Gtk;
 using Gdk;
 using static Gtk.Orientation;
 using Menu = Gio.Menu;
-
+using OpenTK;
+using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
+using System;
+using System.ComponentModel.Design.Serialization;
+using Pango;
 class FMain : ApplicationWindow
 {
+    // We'll subscribe to GLArea signals on the instance below.
 
+    
 
     public FMain(Application app)
     {
@@ -63,6 +70,85 @@ class FMain : ApplicationWindow
         glArea.SetSizeRequest(400, 300);
 
         central_box.Append(glArea);
+
+        // --- OpenGL / shader demo: draw a simple triangle ---
+        int vao = 0;
+        int vbo = 0;
+       
+
+        
+        // Realize: create GL objects and upload geometry
+        glArea.OnRealize += (o, e) =>
+        {
+            // Make context current before calling GL functions
+           
+                glArea.MakeCurrent();
+                GL.LoadBindings( new NativeBindingsContext());
+          
+
+            // shader = new Shader(vertexSrc, fragmentSrc);
+
+            // Triangle vertices (x, y, z)
+            float[] vertices = new float[] {
+                0.0f,  0.5f, 0.0f,
+               -0.5f, -0.5f, 0.0f,
+                0.5f, -0.5f, 0.0f
+            };
+
+            vao = GL.GenVertexArray();
+            GL.BindVertexArray(vao);
+
+            vbo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
+            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
+
+            GL.EnableVertexAttribArray(0);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+
+            GL.BindVertexArray(0);
+        };
+
+        // Render: clear and draw triangle
+        glArea.OnRender += (o, args) =>
+        {
+            int w = glArea.GetAllocatedWidth();
+            int h = glArea.GetAllocatedHeight();
+            GL.Viewport(0, 0, w, h);
+            GL.ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+
+            //if (shader != null && vao != 0)
+            //{
+            // shader.Use();
+            
+                GL.BindVertexArray(vao);
+                GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+                GL.BindVertexArray(0);
+            //}
+
+            return true;
+        };
+
+        // Cleanup when the GLArea is unrealized
+        glArea.OnUnrealize += (o, e) =>
+        {
+            glArea.MakeCurrent(); 
+            if (vbo != 0)
+            {
+                GL.DeleteBuffer(vbo);
+                vbo = 0;
+            }
+            if (vao != 0)
+            {
+                GL.DeleteVertexArray(vao);
+                vao = 0;
+            }
+            // if (shader != null)
+            // {
+            //     shader.Dispose();
+            //     shader = null;
+            // }
+        };
 
 
 
@@ -137,38 +223,15 @@ class FMain : ApplicationWindow
             topMenu.AppendSubmenu("Help", aboutMenu);
 
             return topMenu;
-        };
-    //       private static void OnRealize(sender, args)
-    //         {
-    //             // OJO OpenTK necesita el bondong context para funcionar
-    //             // gtk_gl_area_get_context()
+        }
+        ;
 
-    //             glArea.MakeCurrent();
-    //             //(glArea.Context);
-    //             // Initialize OpenGL context here
-    //             GL.ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    //             Console.WriteLine("GlArea initializad OK");
-
-    //         };
-
-    // private static void OnRender(sender, args)
-    // {
-
-    //     glArea.MakeCurrent();
-    //     // Perform OpenGL drawing commands here
-    //     GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
-    //     // Example: Draw a simple colored triangle
-    //     GL.Begin(PrimitiveType.Triangles);
-    //     GL.Color3(1.0f, 0.0f, 0.0f); GL.Vertex2(-0.5f, -0.5f);
-    //     GL.Color3(0.0f, 1.0f, 0.0f); GL.Vertex2(0.5f, -0.5f);
-    //     GL.Color3(0.0f, 0.0f, 1.0f); GL.Vertex2(0.0f, 0.5f);
-    //     GL.End();
-
-
-    // };
 
     }
+
+
+
+ 
 
     class Hello : Application
     {
@@ -189,7 +252,7 @@ class FMain : ApplicationWindow
             new Hello().Run(args.Length, args);
         }
 
-        
+
     }
 
 
