@@ -1,19 +1,15 @@
 ﻿using e3d;
 using Gtk;
-using Gdk;
 using static Gtk.Orientation;
 using Menu = Gio.Menu;
-using OpenTK;
 using OpenTK.Graphics.OpenGL4;
-using OpenTK.Mathematics;
-using System;
-using System.ComponentModel.Design.Serialization;
-using Pango;
+
 class FMain : ApplicationWindow
 {
     // We'll subscribe to GLArea signals on the instance below.
 
     
+
 
     public FMain(Application app)
     {
@@ -86,10 +82,19 @@ class FMain : ApplicationWindow
            
                 glArea.MakeCurrent();
                 GL.LoadBindings( new NativeBindingsContext());
-          
+            // Get OpenGL version
+                string glVersion = GL.GetString(StringName.Version);
+                // Get GLSL version
+                string glslVersion = GL.GetString(StringName.ShadingLanguageVersion);
 
+                Console.WriteLine("OpenGL Version: " + glVersion);
+                Console.WriteLine("GLSL Version: " + glslVersion);
+
+            int w = glArea.GetAllocatedWidth();
+            int h = glArea.GetAllocatedHeight();
+            GL.Viewport(0, 0, w, h);
             shader = new ShaderLoader("/home/martin/estru3dc/data/shaders/basic.vert", "/home/martin/estru3dc/data/shaders/basic.frag");
-
+shader.Use();
             // Triangle vertices (x, y, z)
             float[] vertices = new float[] {
                 0.0f,  0.5f, 0.0f,
@@ -111,24 +116,33 @@ class FMain : ApplicationWindow
         };
 
         // Render: clear and draw triangle
-        glArea.OnRender += (o, args) =>
+        glArea.OnRender += (o, e) => Draw();
+
+        glArea.OnResize += (o, e) => Resize();
+
+bool Resize()
         {
             int w = glArea.GetAllocatedWidth();
             int h = glArea.GetAllocatedHeight();
             GL.Viewport(0, 0, w, h);
+            return true;
+        }
+        ;
+
+        bool Draw()        {
+ 
             GL.ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             //if (shader != null && vao != 0)
             //{
-            shader.Use();
+            
             
                 GL.BindVertexArray(vao);
                 GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
                 GL.BindVertexArray(0);
-            //}
-
             return true;
+
         };
 
         // Cleanup when the GLArea is unrealized
@@ -147,7 +161,7 @@ class FMain : ApplicationWindow
             }
             // if (shader != null)
             // {
-            shader.Delete();
+            // shader.Delete();
             //     shader = null;
             // }
         };

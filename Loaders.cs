@@ -24,13 +24,14 @@ public class NativeBindingsContext : IBindingsContext
 		if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 		{
 			_context = new WglBindingsContext();
+			Console.WriteLine("Using WINDOWS BindingsContext");
 		}
 		else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
 		{
 
 			_context = new GlxBindingsContext();
-	  		Console.WriteLine("Using LINUX BindingsContext");
-    }
+			Console.WriteLine("Using LINUX BindingsContext");
+		}
 		else
 		{
 			throw new PlatformNotSupportedException();
