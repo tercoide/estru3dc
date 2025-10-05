@@ -20,6 +20,8 @@ class FMain : ApplicationWindow
         Application = app;
         Title = "ESTRU3D";
 
+        ShaderLoader shader;
+
         Menu topMenu = create_menu();
         PopoverMenuBar bar = PopoverMenuBar.NewFromModel(topMenu);
 
@@ -86,7 +88,7 @@ class FMain : ApplicationWindow
                 GL.LoadBindings( new NativeBindingsContext());
           
 
-            // shader = new Shader(vertexSrc, fragmentSrc);
+            shader = new ShaderLoader("/home/martin/estru3dc/data/shaders/basic.vert", "/home/martin/estru3dc/data/shaders/basic.frag");
 
             // Triangle vertices (x, y, z)
             float[] vertices = new float[] {
@@ -119,7 +121,7 @@ class FMain : ApplicationWindow
 
             //if (shader != null && vao != 0)
             //{
-            // shader.Use();
+            shader.Use();
             
                 GL.BindVertexArray(vao);
                 GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
@@ -145,7 +147,7 @@ class FMain : ApplicationWindow
             }
             // if (shader != null)
             // {
-            //     shader.Dispose();
+            shader.Delete();
             //     shader = null;
             // }
         };
