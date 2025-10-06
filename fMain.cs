@@ -4,6 +4,7 @@ using static Gtk.Orientation;
 using Menu = Gio.Menu;
 using OpenTK.Graphics.OpenGL4;
 
+using OpenTK.Windowing.GraphicsLibraryFramework;
 class FMain : ApplicationWindow
 {
     // Variables publicas
@@ -46,7 +47,7 @@ class FMain : ApplicationWindow
         vc0_2.Append(Utils.CreateButton(Config.PathSvg + "lwpolyline.svg", 24, "my tool tip"));
 
         Box left_vbox = Box.New(Vertical, 5);
-        left_vbox.Append(Label.New("three"));
+        left_vbox.Append(Label.New("three") );
         left_vbox.Append(Button.NewWithLabel("button 3"));
         left_vbox.Append(Label.New("four"));
         Button button4 = Button.NewWithLabel("button 4");
@@ -64,6 +65,61 @@ class FMain : ApplicationWindow
         glArea.HasDepthBuffer = true;
         glArea.HasStencilBuffer = true;
         glArea.CanFocus = true;
+
+        // Se agrega un controlador de eventos del mouse
+        EventControllerMotion events  = new();
+         
+         // Create and connect a click gesture
+        GestureClick mouse_click = new();
+        mouse_click.SetButton ( 0 );
+
+        mouse_click.OnPressed += EventsMouse;
+        AddController(mouse_click);
+
+        void EventsMouse(GestureClick o, GestureClick.PressedSignalArgs e)  
+        {
+            int b = (int)mouse_click.GetCurrentButton();  
+            int x = (int)e.X;
+            int y = (int)e.Y;
+            Console.WriteLine($"Mouse pressed at ({x}, {y}) with button {b} ");
+        };
+
+        EventControllerKey key_controller = new();
+        key_controller.OnKeyPressed += on_key_pressed;
+        key_controller.OnKeyReleased += on_key_released;
+        AddController(key_controller);
+
+        bool on_key_pressed(object o, EventControllerKey.KeyPressedSignalArgs args)
+        {
+            Console.WriteLine($"Key pressed: {args.Keycode}");
+            return true;
+        }
+        void on_key_released(object o, EventControllerKey.KeyReleasedSignalArgs args)
+        {
+            Console.WriteLine($"Key released: {args.Keycode}");
+        }   
+
+        //         g_signal_connect(click_gesture, "pressed", G_CALLBACK(on_mouse_press), my_gl_area);
+        // gtk_widget_add_controller(GTK_WIDGET(my_gl_area), GTK_EVENT_CONTROLLER(click_gesture));
+
+        //         events.
+        //   glArea.Events |= EventMask.PointerMotionMask
+        //                        | EventMask.ButtonPressMask
+        //                        | EventMask.ButtonReleaseMask
+        //                        | EventMask.KeyPressMask
+        //                        | EventMask.KeyReleaseMask
+        //                        | EventMask.FocusChangeMask;
+
+        //         glArea.CanFocus = true;
+
+
+
+        //         glArea.OnNotify() += OnGlAreaButtonPressEvent;
+        //         glArea.ButtonReleaseEvent += OnGlAreaButtonReleaseEvent;
+        //         glArea.MotionNotifyEvent += OnGlAreaMotionNotifyEvent;
+
+        //         glArea.KeyPressEvent += OnGlAreaKeyPressEvent;
+        //         glArea.KeyReleaseEvent += OnGlAreaKeyReleaseEvent;
 
         glArea.SetRequiredVersion(3, 3);    // Sin esto estamos limitados a OpenGL 2.1 en Linux (GLX) y 1.1 en Windows (WGL)
 
