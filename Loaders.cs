@@ -39,7 +39,9 @@ public class NativeBindingsContext : IBindingsContext
   }
 
   public IntPtr GetProcAddress(string procName)
+
   {
+	
     return _context.GetProcAddress(procName);
   }
 }
@@ -74,8 +76,8 @@ public class WglBindingsContext : IBindingsContext
 		public static extern IntPtr GetProcAddress(ModuleSafeHandle hModule, string procName);
 	}
 
-	[SecurityPermission(SecurityAction.InheritanceDemand, UnmanagedCode = true)]
-	[SecurityPermission(SecurityAction.Demand, UnmanagedCode = true)]
+	// [SecurityPermission(SecurityAction.InheritanceDemand, UnmanagedCode = true)]
+	// [SecurityPermission(SecurityAction.Demand, UnmanagedCode = true)]
 	// ReSharper disable once ClassNeverInstantiated.Local
 	private class ModuleSafeHandle : SafeHandleZeroOrMinusOneIsInvalid
 	{
@@ -83,7 +85,7 @@ public class WglBindingsContext : IBindingsContext
 		{
 		}
 
-		[ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
+		// [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
 		protected override bool ReleaseHandle()
 		{
 			return Kernel32.FreeLibrary(handle);

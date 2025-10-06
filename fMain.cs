@@ -8,7 +8,7 @@ class FMain : ApplicationWindow
 {
     // We'll subscribe to GLArea signals on the instance below.
 
-    
+    Shader shader;
 
 
     public FMain(Application app)
@@ -16,7 +16,7 @@ class FMain : ApplicationWindow
         Application = app;
         Title = "ESTRU3D";
 
-        ShaderLoader shader;
+        
 
         Menu topMenu = create_menu();
         PopoverMenuBar bar = PopoverMenuBar.NewFromModel(topMenu);
@@ -63,6 +63,11 @@ class FMain : ApplicationWindow
         // Enable required capabilities
         glArea.HasDepthBuffer = true;
         glArea.HasStencilBuffer = true;
+        glArea.CanFocus = true;
+
+		glArea.SetRequiredVersion(3, 3);    // Sin esto estamos limitados a OpenGL 2.1 en Linux (GLX) y 1.1 en Windows (WGL)
+
+
 
         // Set minimum size
         glArea.SetSizeRequest(400, 300);
@@ -76,13 +81,15 @@ class FMain : ApplicationWindow
 
         
         // Realize: create GL objects and upload geometry
-        glArea.OnRealize += (o, e) =>
+        glArea.OnRealize += (o, e) => Realize();
+
+        void Realize()
         {
             // Make context current before calling GL functions
            
                 glArea.MakeCurrent();
                 GL.LoadBindings( new NativeBindingsContext());
-            // Get OpenGL version
+                // Get OpenGL version
                 string glVersion = GL.GetString(StringName.Version);
                 // Get GLSL version
                 string glslVersion = GL.GetString(StringName.ShadingLanguageVersion);
@@ -90,11 +97,9 @@ class FMain : ApplicationWindow
                 Console.WriteLine("OpenGL Version: " + glVersion);
                 Console.WriteLine("GLSL Version: " + glslVersion);
 
-            int w = glArea.GetAllocatedWidth();
-            int h = glArea.GetAllocatedHeight();
-            GL.Viewport(0, 0, w, h);
-            shader = new ShaderLoader("/home/martin/estru3dc/data/shaders/basic.vert", "/home/martin/estru3dc/data/shaders/basic.frag");
-shader.Use();
+           
+            shader = new Shader("/home/martin/estru3dc/data/shaders/basic.vert", "/home/martin/estru3dc/data/shaders/basic.frag");
+
             // Triangle vertices (x, y, z)
             float[] vertices = new float[] {
                 0.0f,  0.5f, 0.0f,
@@ -120,7 +125,7 @@ shader.Use();
 
         glArea.OnResize += (o, e) => Resize();
 
-bool Resize()
+        bool Resize()
         {
             int w = glArea.GetAllocatedWidth();
             int h = glArea.GetAllocatedHeight();
@@ -129,18 +134,16 @@ bool Resize()
         }
         ;
 
-        bool Draw()        {
+        bool Draw()
+        {
  
             GL.ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
-            //if (shader != null && vao != 0)
-            //{
-            
-            
-                GL.BindVertexArray(vao);
-                GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
-                GL.BindVertexArray(0);
+  
+            shader?.Use();
+            GL.BindVertexArray(vao);
+            GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+            GL.BindVertexArray(0);
             return true;
 
         };
@@ -162,7 +165,6 @@ bool Resize()
             // if (shader != null)
             // {
             // shader.Delete();
-            //     shader = null;
             // }
         };
 
