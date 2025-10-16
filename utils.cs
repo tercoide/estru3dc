@@ -5,6 +5,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Security.Permissions;
 using OpenTK;
+using e3d;
 
 
 public class Utils
@@ -47,11 +48,14 @@ public class Utils
                 button.Child = image;
             }
 
-            if (tooltip != null)
-            {
-                button.TooltipText = tooltip;
-            }
-
+        if (tooltip != null)
+        {
+            button.TooltipText = tooltip;
+        }
+            
+        //     ActionRegistry.Bind(button, Path.GetFileNameWithoutExtension(iconPath).Replace("-", "_"));
+        // button.ActionName = $"win.{Path.GetFileNameWithoutExtension(iconPath).Replace("-", "_")}";
+    
             return button;
         }
 }

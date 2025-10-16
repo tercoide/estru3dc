@@ -7,18 +7,17 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 class FMain : ApplicationWindow
 {
-    // Variables publicas
-
-    Shader shader;
+    // We'll subscribe to GLArea signals on the instance below.
 
 
-    public FMain(Application app)   // = Form.Load()
+    Shader? shader;
+
+    public FMain(Application app)
     {
         Application = app;
         Title = "ESTRU3D";
 
-
-
+       
         Menu topMenu = create_menu();
         PopoverMenuBar bar = PopoverMenuBar.NewFromModel(topMenu);
 
@@ -66,61 +65,6 @@ class FMain : ApplicationWindow
         glArea.HasStencilBuffer = true;
         glArea.CanFocus = true;
 
-        // Se agrega un controlador de eventos del mouse
-        EventControllerMotion events  = new();
-         
-         // Create and connect a click gesture
-        GestureClick mouse_click = new();
-        mouse_click.SetButton ( 0 );
-
-        mouse_click.OnPressed += EventsMouse;
-        AddController(mouse_click);
-
-        void EventsMouse(GestureClick o, GestureClick.PressedSignalArgs e)  
-        {
-            int b = (int)mouse_click.GetCurrentButton();  
-            int x = (int)e.X;
-            int y = (int)e.Y;
-            Console.WriteLine($"Mouse pressed at ({x}, {y}) with button {b} ");
-        };
-
-        EventControllerKey key_controller = new();
-        key_controller.OnKeyPressed += on_key_pressed;
-        key_controller.OnKeyReleased += on_key_released;
-        AddController(key_controller);
-
-        bool on_key_pressed(object o, EventControllerKey.KeyPressedSignalArgs args)
-        {
-            Console.WriteLine($"Key pressed: {args.Keycode}");
-            return true;
-        }
-        void on_key_released(object o, EventControllerKey.KeyReleasedSignalArgs args)
-        {
-            Console.WriteLine($"Key released: {args.Keycode}");
-        }   
-
-        //         g_signal_connect(click_gesture, "pressed", G_CALLBACK(on_mouse_press), my_gl_area);
-        // gtk_widget_add_controller(GTK_WIDGET(my_gl_area), GTK_EVENT_CONTROLLER(click_gesture));
-
-        //         events.
-        //   glArea.Events |= EventMask.PointerMotionMask
-        //                        | EventMask.ButtonPressMask
-        //                        | EventMask.ButtonReleaseMask
-        //                        | EventMask.KeyPressMask
-        //                        | EventMask.KeyReleaseMask
-        //                        | EventMask.FocusChangeMask;
-
-        //         glArea.CanFocus = true;
-
-
-
-        //         glArea.OnNotify() += OnGlAreaButtonPressEvent;
-        //         glArea.ButtonReleaseEvent += OnGlAreaButtonReleaseEvent;
-        //         glArea.MotionNotifyEvent += OnGlAreaMotionNotifyEvent;
-
-        //         glArea.KeyPressEvent += OnGlAreaKeyPressEvent;
-        //         glArea.KeyReleaseEvent += OnGlAreaKeyReleaseEvent;
-
         glArea.SetRequiredVersion(3, 3);    // Sin esto estamos limitados a OpenGL 2.1 en Linux (GLX) y 1.1 en Windows (WGL)
 
 
@@ -139,18 +83,100 @@ class FMain : ApplicationWindow
         // Realize: create GL objects and upload geometry
         glArea.OnRealize += (o, e) => Realize();
 
+        void Realize()
+        {
+            // Make context current before calling GL functions
+           
+                glArea.MakeCurrent();
+                GL.LoadBindings( new NativeBindingsContext());
+                string apis = "Allowed API" + glArea.GetAllowedApis();
+            Console.WriteLine(apis);
+            glArea.SetAllowedApis(Gdk.GLAPI.Gl);
+            // Get OpenGL version
+            string glVersion = GL.GetString(StringName.Version);
+                // Get GLSL version
+                string glslVersion = GL.GetString(StringName.ShadingLanguageVersion);
 
+
+                Console.WriteLine("OpenGL Version: " + glVersion);
+                Console.WriteLine("GLSL Version: " + glslVersion);
+
+            int w = glArea.GetAllocatedWidth();
+            int h = glArea.GetAllocatedHeight();
+            GL.Viewport(0, 0, w, h);
+            shader = new Shader("/home/martin/estru3dc/data/shaders/basic.vert", "/home/martin/estru3dc/data/shaders/basic.frag");
+
+            // Triangle vertices (x, y, z)
+            float[] vertices = new float[] {
+                0.0f,  0.5f, 0.0f,
+               -0.5f, -0.5f, 0.0f,
+                0.5f, -0.5f, 0.0f
+            };
+
+            vao = GL.GenVertexArray();
+            GL.BindVertexArray(vao);
+
+            vbo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
+            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
+
+            GL.EnableVertexAttribArray(0);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+
+            GL.BindVertexArray(0);
+        };
 
         // Render: clear and draw triangle
         glArea.OnRender += (o, e) => Draw();
 
         glArea.OnResize += (o, e) => Resize();
 
+bool Resize()
+        {
+            int w = glArea.GetAllocatedWidth();
+            int h = glArea.GetAllocatedHeight();
+            GL.Viewport(0, 0, w, h);
+            return true;
+        }
+        ;
 
+        bool Draw()        {
+ 
+            GL.ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+
+            if (shader != null && vao != 0)
+            {
+                shader.Use();
+            }
+            
+                GL.BindVertexArray(vao);
+                GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+                GL.BindVertexArray(0);
+            return true;
+
+        };
 
         // Cleanup when the GLArea is unrealized
-        glArea.OnUnrealize += (o, e) => Unrealize();
-
+        glArea.OnUnrealize += (o, e) =>
+        {
+            glArea.MakeCurrent(); 
+            if (vbo != 0)
+            {
+                GL.DeleteBuffer(vbo);
+                vbo = 0;
+            }
+            if (vao != 0)
+            {
+                GL.DeleteVertexArray(vao);
+                vao = 0;
+            }
+            // if (shader != null)
+            // {
+            // shader.Delete();
+            //     shader = null;
+            // }
+        };
 
 
 
@@ -228,96 +254,36 @@ class FMain : ApplicationWindow
         }
         ;
 
-        void Realize()
-        {
-            // Make context current before calling GL functions
-
-            glArea.MakeCurrent();
-            GL.LoadBindings(new NativeBindingsContext());
-            // Get OpenGL version
-            string glVersion = GL.GetString(StringName.Version);
-            // Get GLSL version
-            string glslVersion = GL.GetString(StringName.ShadingLanguageVersion);
-
-            Console.WriteLine("OpenGL Version: " + glVersion);
-            Console.WriteLine("GLSL Version: " + glslVersion);
-
-
-            shader = new Shader("/home/martin/estru3dc/data/shaders/basic.vert", "/home/martin/estru3dc/data/shaders/basic.frag");
-
-            // Triangle vertices (x, y, z)
-            float[] vertices = new float[] {
-                0.0f,  0.5f, 0.0f,
-               -0.5f, -0.5f, 0.0f,
-                0.5f, -0.5f, 0.0f
-            };
-
-            vao = GL.GenVertexArray();
-            GL.BindVertexArray(vao);
-
-            vbo = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
-            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
-
-            GL.EnableVertexAttribArray(0);
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
-
-            GL.BindVertexArray(0);
-        }
-        ;
-
-        bool Resize()
-        {
-            int w = glArea.GetAllocatedWidth();
-            int h = glArea.GetAllocatedHeight();
-            GL.Viewport(0, 0, w, h);
-            return true;
-        }
-        ;
-
-        bool Draw()
-        {
-
-            GL.ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
-            shader?.Use();
-            GL.BindVertexArray(vao);
-            GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
-            GL.BindVertexArray(0);
-            return true;
-
-        }
-        ;
-        
-        void Unrealize()
-        {
-            glArea.MakeCurrent();
-            if (vbo != 0)
-            {
-                GL.DeleteBuffer(vbo);
-                vbo = 0;
-            }
-            if (vao != 0)
-            {
-                GL.DeleteVertexArray(vao);
-                vao = 0;
-            }
-            // if (shader != null)
-            // {
-            // shader.Delete();
-            // }
-        };
 
     }
-    
-    
 
 
 
  
 
-   
+    class Hello : Application
+    {
+        public Hello() : base([])
+        {
+            OnActivate += On_activate;
+        }
+
+        void On_activate(Gio.Application app, EventArgs args)
+        {
+            FMain w = new((Application)app);
+
+            ActionRegistry.RegisterToolbarActions(w);
+
+            w.Show();
+        }
+
+        // static void Main(string[] args)
+        // {
+        //     new Hello().Run(args.Length, args);
+        // }
+
+
+    }
 
 
   

@@ -7,7 +7,7 @@ using Microsoft.Win32.SafeHandles;
 using OpenTK;
 public class GlxBindingsContext : IBindingsContext
 {
-	[DllImport("libGL", CharSet = CharSet.Ansi)]
+	[DllImport("libGL.so.1", CharSet = CharSet.Ansi)]
 	private static extern IntPtr glXGetProcAddress(string procName);
 	public IntPtr GetProcAddress(string procName)
 	{
@@ -39,11 +39,11 @@ public class NativeBindingsContext : IBindingsContext
   }
 
   public IntPtr GetProcAddress(string procName)
-
   {
-	
-    return _context.GetProcAddress(procName);
-  }
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
+        return _context.GetProcAddress(procName);
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
+    }
 }
 public class WglBindingsContext : IBindingsContext
 {
