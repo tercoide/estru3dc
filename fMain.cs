@@ -5,11 +5,12 @@ using Menu = Gio.Menu;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-class FMain : ApplicationWindow
+class FMain : Gtk.ApplicationWindow
 {
     Shader? shader;
+    Gtk.Label statusLabel;
 
-    public FMain(Application app)
+    public FMain(Gtk.Application app)
     {
         Application = app;
         Title = "ESTRU3D";
@@ -17,13 +18,13 @@ class FMain : ApplicationWindow
         ActionRegistry.RegisterToolbarActions(this);
 
         Menu topMenu = create_menu();
-        PopoverMenuBar bar = PopoverMenuBar.NewFromModel(topMenu);
+        Gtk.PopoverMenuBar bar = Gtk.PopoverMenuBar.NewFromModel(topMenu);
 
-        Box vc0 = Box.New(Vertical, 1);
-        Box vc0_1 = Box.New(Horizontal, 1);
-        Box vc0_2 = Box.New(Horizontal, 5);
-        Box vc0_3 = Box.New(Horizontal, 5);
-        Box vc0_4 = Box.New(Horizontal, 5);
+        Gtk.Box vc0 = Gtk.Box.New(Vertical, 1);
+        Gtk.Box vc0_1 = Gtk.Box.New(Horizontal, 1);
+        Gtk.Box vc0_2 = Gtk.Box.New(Horizontal, 5);
+        Gtk.Box vc0_3 = Gtk.Box.New(Horizontal, 5);
+        Gtk.Box vc0_4 = Gtk.Box.New(Horizontal, 5);
 
         vc0.Append(vc0_1);
         vc0.Append(vc0_2);
@@ -43,18 +44,18 @@ class FMain : ApplicationWindow
         vc0_2.Append(Utils.CreateButton(Config.PathSvg + "hatch.svg", 24, "hatch", "Hatch"));
         vc0_2.Append(Utils.CreateButton(Config.PathSvg + "lwpolyline.svg", 24, "polyline", "Polyline"));
 
-        Box left_vbox = Box.New(Vertical, 5);
-        left_vbox.Append(Label.New("three"));
-        left_vbox.Append(Button.NewWithLabel("button 3"));
-        left_vbox.Append(Label.New("four"));
-        Button button4 = Button.NewWithLabel("button 4");
+        Gtk.Box left_vbox = Gtk.Box.New(Vertical, 5);
+        left_vbox.Append(Gtk.Label.New("three"));
+        left_vbox.Append(Gtk.Button.NewWithLabel("button 3"));
+        left_vbox.Append(Gtk.Label.New("four"));
+        Gtk.Button button4 = Gtk.Button.NewWithLabel("button 4");
         button4.Vexpand = true;
         left_vbox.Append(button4);
 
-        Box central_box = Box.New(Orientation.Vertical, 1);
+        Gtk.Box central_box = Gtk.Box.New(Gtk.Orientation.Vertical, 1);
 
         // Create GLArea widget
-        GLArea glArea = Gtk.GLArea.New();
+        Gtk.GLArea glArea = Gtk.GLArea.New();
         glArea.Vexpand = true;
         glArea.Hexpand = true;
         glArea.HasDepthBuffer = true;
@@ -76,7 +77,7 @@ class FMain : ApplicationWindow
             string apis = "Allowed API: " + glArea.GetAllowedApis();
             Console.WriteLine(apis);
             glArea.SetAllowedApis(Gdk.GLAPI.Gl);
-            
+
             string glVersion = GL.GetString(StringName.Version);
             string glslVersion = GL.GetString(StringName.ShadingLanguageVersion);
             Console.WriteLine("OpenGL Version: " + glVersion);
@@ -86,9 +87,18 @@ class FMain : ApplicationWindow
             int h = glArea.GetAllocatedHeight();
             Console.WriteLine($"Resized onRealized to {w}x{h}");
             GL.Viewport(0, 0, w, h);
+            UpdateStatusBar(w, h);
             
-            shader = new Shader("/home/martin/estru3dc/data/shaders/basic.vert", 
-                              "/home/martin/estru3dc/data/shaders/basic.frag");
+            try
+            {
+                shader = new Shader("/home/martin/estru3dc/data/shaders/basic.vert", 
+                                  "/home/martin/estru3dc/data/shaders/basic.frag");
+                Console.WriteLine("Shader compiled successfully");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Shader error: {ex.Message}");
+            }
 
             float[] vertices = {
                 -0.5f, -0.5f, 0.0f,
@@ -108,6 +118,15 @@ class FMain : ApplicationWindow
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
             GL.BindVertexArray(0);
+            
+            Console.WriteLine($"VAO: {vao}, VBO: {vbo}");
+            
+            // Check for OpenGL errors
+            var error = GL.GetError();
+            if (error != OpenTK.Graphics.OpenGL4.ErrorCode.NoError)
+            {
+                Console.WriteLine($"OpenGL Error: {error}");
+            }
         };
 
         glArea.OnResize += (o, e) =>
@@ -117,6 +136,7 @@ class FMain : ApplicationWindow
             int h = glArea.GetAllocatedHeight();
             Console.WriteLine($"Resized to {w}x{h}");
             GL.Viewport(0, 0, w, h);
+            UpdateStatusBar(w, h);
             glArea.QueueRender();
         };
 
@@ -136,13 +156,73 @@ class FMain : ApplicationWindow
             return true;
         };
 
-        Box hc0 = Box.New(Horizontal, 1);
+        // Create right side grid with 2 columns
+        Gtk.Grid rightGrid = Gtk.Grid.New();
+        rightGrid.ColumnSpacing = 0;
+        rightGrid.RowSpacing = 0;
+        rightGrid.MarginStart = 5;
+        rightGrid.MarginEnd = 5;
+        rightGrid.MarginTop = 5;
+        rightGrid.MarginBottom = 5;
+        rightGrid.ColumnHomogeneous = true;
+        rightGrid.RowHomogeneous = true;
+
+        // Add CSS for grid borders
+        var cssProvider = Gtk.CssProvider.New();
+        cssProvider.LoadFromString("""
+        .grid-cell {
+            border: 1px solid #cccccc;
+            padding: 5px;
+        }
+        """);
+
+        Gtk.StyleContext.AddProviderForDisplay(
+            Gdk.Display.GetDefault(),
+            cssProvider,
+            800  // GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
+        );
+
+        // Add some example rows (you can modify this as needed)
+        for (int row = 0; row < 10; row++)
+        {
+            Gtk.Label label = Gtk.Label.New($"Item {row + 1}:");
+            label.Halign = Gtk.Align.Start;
+            label.AddCssClass("grid-cell");
+            rightGrid.Attach(label, 0, row, 1, 1);
+
+            Gtk.Entry entry = Gtk.Entry.New();
+            entry.Hexpand = true;
+            entry.AddCssClass("grid-cell");
+            rightGrid.Attach(entry, 1, row, 1, 1);
+        }
+
+        // Create horizontal container for all three sections
+        Gtk.Box hc0 = Gtk.Box.New(Horizontal, 1);
         hc0.Append(left_vbox);
         hc0.Append(central_box);
+        hc0.Append(rightGrid);
 
         vc0.Append(hc0);
+
+        // Create status bar at the bottom
+        statusLabel = Gtk.Label.New("GLArea: 0 x 0");
+        statusLabel.Halign = Gtk.Align.Start;
+        statusLabel.MarginStart = 10;
+        statusLabel.MarginTop = 5;
+        statusLabel.MarginBottom = 5;
+        
+        Gtk.Box statusBar = Gtk.Box.New(Horizontal, 0);
+        statusBar.Append(statusLabel);
+        
+        vc0.Append(statusBar);
+
         SetChild(vc0);
-        SetDefaultSize(800, 600);
+        SetDefaultSize(1000, 600);
+    }
+
+    void UpdateStatusBar(int width, int height)
+    {
+        statusLabel.SetLabel($"GLArea: {width} x {height}");
     }
 
     static Menu create_menu()
@@ -177,7 +257,7 @@ class FMain : ApplicationWindow
     }
 }
 
-class Hello : Application
+class Hello : Gtk.Application
 {
     public Hello() : base([])
     {
