@@ -34,7 +34,7 @@ public class Utils
         }
     }
 
-    public static Gtk.Button CreateButton(string iconPath, int iconSize = 24, string? tooltip = null)
+    public static Gtk.Button CreateButton(string iconPath, int iconSize = 24, string? sAction="", string? tooltip = null)
     {
     var image = null as Gtk.Image;
 
@@ -51,6 +51,10 @@ public class Utils
         if (tooltip != null)
         {
             button.TooltipText = tooltip;
+        }
+        if (sAction != "")
+        {
+            button.SetActionName("win." + sAction);
         }
             
         //     ActionRegistry.Bind(button, Path.GetFileNameWithoutExtension(iconPath).Replace("-", "_"));
